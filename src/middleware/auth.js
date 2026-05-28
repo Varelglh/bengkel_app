@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const blacklist = require("../utils/tokenBlacklist");
 
 module.exports = (req, res, next) => {
   try {
@@ -13,6 +14,11 @@ module.exports = (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({ message: "Token tidak ada" });
+    }
+
+    // check blacklist
+    if (blacklist.has(token)) {
+      return res.status(401).json({ message: "Token tidak valid (logged out)" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

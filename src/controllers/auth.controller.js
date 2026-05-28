@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const blacklist = require("../utils/tokenBlacklist");
 
 exports.register = async (req, res) => {
   try {
@@ -98,5 +99,34 @@ exports.login = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Login error" });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    let token;
+
+    if (authHeader) token = authHeader.split(" ")[1];
+    else if (req.query.token) token = req.query.token;
+
+    if (!token) return res.status(400).json({ message: "Token tidak ada" });
+
+    // decode to get expiry
+    let decoded;
+    try {
+      decoded = jwt.decode(token);
+    } catch (e) {
+      decoded = null;
+    }
+
+    const exp = decoded && decoded.exp ? decoded.exp : Math.floor(Date.now() / 1000) + 60 * 60;
+
+    blacklist.add(token, exp);
+
+    res.json({ success: true, message: "Logout berhasil" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Logout error" });
   }
 };
