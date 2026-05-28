@@ -354,9 +354,12 @@ exports.updateInspection = async (req, res) => {
     }
 
     // ================= ICON BARU (JIKA ADA) =================
-    const newCarIcon = req.files?.car_icon
-      ? `/uploads/inspections/${req.files.car_icon[0].filename}`
-      : inspection.car_icon; // tetap pakai icon lama
+    let newCarIcon = inspection.car_icon;
+    if (req.files?.car_icon) {
+      newCarIcon = `/uploads/inspections/${req.files.car_icon[0].filename}`;
+    } else if (data.delete_car_icon === true) {
+      newCarIcon = null;
+    }
 
     // ================= BALIKIN STOK PART LAMA =================
     const [oldParts] = await db.query(
