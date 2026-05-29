@@ -182,7 +182,7 @@ exports.createInspection = async (req, res) => {
     console.error(err);
     return res.status(500).json({
       success: false,
-      message: "Terjadi kesalahan server"
+      message: "Terjadi kesalahan server: " + err.message
     });
   }
 };
@@ -514,7 +514,7 @@ exports.updateInspection = async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error: " + err.message });
   }
 };
 
