@@ -68,8 +68,8 @@ exports.createInspection = async (req, res) => {
       });
     }
 
-    const partNos = parts.map(p => p.part_no);
-    if (new Set(partNos).size !== partNos.length) {
+    const partKeys = parts.map(p => p.part_id ? `id:${p.part_id}` : `no:${p.part_no}`);
+    if (new Set(partKeys).size !== partKeys.length) {
       return res.status(400).json({
         success: false,
         message: "Part tidak boleh duplikat"
@@ -116,24 +116,33 @@ exports.createInspection = async (req, res) => {
 
     // ================= INSERT PART =================
     for (let i = 0; i < parts.length; i++) {
-      const { part_no, qty } = parts[i];
+      const { part_id, part_no, qty } = parts[i];
 
-      const [p] = await db.query(
-        "SELECT id, harga, stock FROM part_stock WHERE part_no=?",
-        [part_no]
-      );
+      // Support lookup by part_id (dropdown) atau part_no (legacy)
+      let pRows;
+      if (part_id) {
+        [pRows] = await db.query(
+          "SELECT id, harga, stock, part_no FROM part_stock WHERE id=?",
+          [part_id]
+        );
+      } else {
+        [pRows] = await db.query(
+          "SELECT id, harga, stock FROM part_stock WHERE part_no=?",
+          [part_no]
+        );
+      }
 
-      if (!p.length) {
+      if (!pRows.length) {
         return res.status(404).json({
           success: false,
-          message: `Part ${part_no} tidak ditemukan`
+          message: `Part ${part_id || part_no} tidak ditemukan`
         });
       }
 
-      if (p[0].stock < qty) {
+      if (pRows[0].stock < qty) {
         return res.status(400).json({
           success: false,
-          message: `Stok part ${part_no} tidak cukup`
+          message: `Stok part ${pRows[0].part_no || part_no} tidak cukup`
         });
       }
 
@@ -145,15 +154,15 @@ exports.createInspection = async (req, res) => {
         `INSERT INTO inspection_parts
         (inspection_id,photo,part_id,harga,qty,available_qty)
         VALUES (?,?,?,?,?,?)`,
-        [inspection_id, partPhoto, p[0].id, p[0].harga, qty, p[0].stock]
+        [inspection_id, partPhoto, pRows[0].id, pRows[0].harga, qty, pRows[0].stock]
       );
 
       await db.query(
         "UPDATE part_stock SET stock = stock - ? WHERE id=?",
-        [qty, p[0].id]
+        [qty, pRows[0].id]
       );
 
-      total += Number(p[0].harga) * Number(qty);
+      total += Number(pRows[0].harga) * Number(qty);
     }
 
     // ================= UPDATE TOTAL =================
@@ -322,6 +331,43 @@ exports.getKaruUsers = async (req, res) => {
 };
 
 
+/*
+|--------------------------------------------------------------------------
+| GET DISTINCT VEHICLE TYPES dari part_stock
+|--------------------------------------------------------------------------
+*/
+exports.getVehicleTypes = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT DISTINCT type_kendaraan FROM part_stock WHERE type_kendaraan IS NOT NULL AND type_kendaraan != '' ORDER BY type_kendaraan ASC"
+    );
+    const types = rows.map(r => r.type_kendaraan);
+    return res.json({ success: true, data: types });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| GET PARTS berdasarkan type_kendaraan
+|--------------------------------------------------------------------------
+*/
+exports.getPartsByVehicleType = async (req, res) => {
+  try {
+    const { type } = req.params;
+    const [rows] = await db.query(
+      "SELECT id, part_no, part_name, stock, harga, icon FROM part_stock WHERE type_kendaraan = ? AND stock > 0 ORDER BY part_name ASC",
+      [type]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.updateInspection = async (req, res) => {
   try {
     const { id } = req.params;
@@ -409,20 +455,29 @@ exports.updateInspection = async (req, res) => {
 
     // ================= INSERT PART BARU =================
     for (let i = 0; i < parts.length; i++) {
-      const { part_no, qty } = parts[i];
+      const { part_id, part_no, qty } = parts[i];
 
-      const [p] = await db.query(
-        "SELECT id, harga, stock FROM part_stock WHERE part_no=?",
-        [part_no]
-      );
-
-      if (!p.length) {
-        return res.status(404).json({ message: `Part ${part_no} tidak ditemukan` });
+      // Support lookup by part_id (dropdown) atau part_no (legacy)
+      let pRows;
+      if (part_id) {
+        [pRows] = await db.query(
+          "SELECT id, harga, stock, part_no FROM part_stock WHERE id=?",
+          [part_id]
+        );
+      } else {
+        [pRows] = await db.query(
+          "SELECT id, harga, stock FROM part_stock WHERE part_no=?",
+          [part_no]
+        );
       }
 
-      if (p[0].stock < qty) {
+      if (!pRows.length) {
+        return res.status(404).json({ message: `Part ${part_id || part_no} tidak ditemukan` });
+      }
+
+      if (pRows[0].stock < qty) {
         return res.status(400).json({
-          message: `Stok part ${part_no} tidak cukup`
+          message: `Stok part ${pRows[0].part_no || part_no} tidak cukup`
         });
       }
 
@@ -434,15 +489,15 @@ exports.updateInspection = async (req, res) => {
         `INSERT INTO inspection_parts
         (inspection_id,photo,part_id,harga,qty,available_qty)
         VALUES (?,?,?,?,?,?)`,
-        [id, partPhoto, p[0].id, p[0].harga, qty, p[0].stock]
+        [id, partPhoto, pRows[0].id, pRows[0].harga, qty, pRows[0].stock]
       );
 
       await db.query(
         "UPDATE part_stock SET stock = stock - ? WHERE id=?",
-        [qty, p[0].id]
+        [qty, pRows[0].id]
       );
 
-      total += Number(p[0].harga) * Number(qty);
+      total += Number(pRows[0].harga) * Number(qty);
     }
 
     // ================= UPDATE TOTAL =================

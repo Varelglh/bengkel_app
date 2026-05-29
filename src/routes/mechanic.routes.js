@@ -33,6 +33,21 @@ router.get(
   mechanicController.getKaruUsers
 );
 
+// dropdown tipe kendaraan dari part_stock
+router.get(
+  "/vehicle-types",
+  auth,
+  role(["mekanik"]),
+  mechanicController.getVehicleTypes
+);
+
+// parts berdasarkan tipe kendaraan
+router.get(
+  "/parts-by-type/:type",
+  auth,
+  role(["mekanik"]),
+  mechanicController.getPartsByVehicleType
+);
 
 router.get(
   "/inspection",
