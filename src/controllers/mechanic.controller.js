@@ -15,6 +15,7 @@ exports.createInspection = async (req, res) => {
       tanggal,
       type_kendaraan,
       tahun,
+      cc,
       odometer,
       sa_id,
       karu_id,
@@ -96,14 +97,15 @@ exports.createInspection = async (req, res) => {
     // ================= INSERT INSPECTION =================
     const [inspection] = await db.query(
       `INSERT INTO inspections
-      (car_icon,nopol,tanggal,type_kendaraan,tahun,odometer,mekanik_id,sa_id,karu_id,status)
-      VALUES (?,?,?,?,?,?,?,?,?,'OPEN')`,
+      (car_icon,nopol,tanggal,type_kendaraan,tahun,cc,odometer,mekanik_id,sa_id,karu_id,status)
+      VALUES (?,?,?,?,?,?,?,?,?,?,'OPEN')`,
       [
         carIcon,
         nopol,
         tanggal,
         type_kendaraan,
         tahun,
+        cc,
         odometer,
         mekanik_id,
         sa_id,
@@ -234,6 +236,7 @@ exports.getInspectionDetail = async (req, res) => {
         i.nopol,
         i.type_kendaraan,
         i.tahun,
+        i.cc,
         i.odometer,
         i.tanggal,
         i.car_icon,
@@ -283,6 +286,7 @@ exports.getInspectionDetail = async (req, res) => {
         nopol: inspection.nopol,
         type_kendaraan: inspection.type_kendaraan,
         tahun: inspection.tahun,
+        cc: inspection.cc,
         odometer: inspection.odometer,
         tanggal: inspection.tanggal,
         car_icon: inspection.car_icon,
@@ -379,6 +383,7 @@ exports.updateInspection = async (req, res) => {
       tanggal,
       type_kendaraan,
       tahun,
+      cc,
       odometer,
       sa_id,
       karu_id,
@@ -434,6 +439,7 @@ exports.updateInspection = async (req, res) => {
         tanggal=?,
         type_kendaraan=?,
         tahun=?,
+        cc=?,
         odometer=?,
         sa_id=?,
         karu_id=?
@@ -444,6 +450,7 @@ exports.updateInspection = async (req, res) => {
         tanggal,
         type_kendaraan,
         tahun,
+        cc,
         odometer,
         sa_id,
         karu_id,
