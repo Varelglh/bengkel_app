@@ -4,7 +4,7 @@ exports.createPart = async (req, res) => {
   try {
     console.log('BODY:', req.body);      
     console.log('FILE:', req.file);
-    const { part_no, part_name, stock, harga } = req.body;
+    const { part_no, part_name, stock, harga, type_kendaraan } = req.body;
     const icon = req.file ? `/uploads/parts/${req.file.filename}` : null;
 
     const [exist] = await db.query(
@@ -17,8 +17,8 @@ exports.createPart = async (req, res) => {
     }
 
     await db.query(
-      "INSERT INTO part_stock (part_no, part_name, icon, stock, harga) VALUES (?, ?, ?, ?, ?)",
-      [part_no, part_name, icon, stock, harga]
+      "INSERT INTO part_stock (part_no, part_name, icon, stock, harga, type_kendaraan) VALUES (?, ?, ?, ?, ?, ?)",
+      [part_no, part_name, icon, stock, harga, type_kendaraan]
     );
 
     res.json({ success: true, message: "Part berhasil ditambahkan" });
@@ -58,7 +58,7 @@ exports.getAllParts = async (req, res) => {
 exports.updatePart = async (req, res) => {
   try {
     const { id } = req.params;
-    const { part_no, part_name, stock, harga } = req.body;
+    const { part_no, part_name, stock, harga, type_kendaraan } = req.body;
 
     const icon = req.file
       ? `/uploads/parts/${req.file.filename}`
@@ -87,8 +87,8 @@ exports.updatePart = async (req, res) => {
 
     // Update data
     await db.query(
-      "UPDATE part_stock SET part_no=?, part_name=?, icon=?, stock=?, harga=? WHERE id=?",
-      [part_no, part_name, icon, stock, harga, id]
+      "UPDATE part_stock SET part_no=?, part_name=?, icon=?, stock=?, harga=?, type_kendaraan=? WHERE id=?",
+      [part_no, part_name, icon, stock, harga, type_kendaraan, id]
     );
 
     res.json({
