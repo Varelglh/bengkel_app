@@ -13,11 +13,9 @@ router.put("/:id", auth, role(["part"]), upload.single("icon"), partController.u
 router.delete("/:id", auth, role(["part"]), partController.deletePart);
 
 // 🔥 Dipakai FE & Mekanik untuk cek stok by nomor part
-router.get(
-  "/by-no/:part_no",
-  auth,
-  role(["mekanik","part","sa","karu"]),
-  partController.getPartByNo   // ⬅️ ini yang benar
-);
+router.get("/by-no/:part_no", auth, role(["mekanik","part","sa","karu"]), partController.getPartByNo);
+
+// Tambahan: Ambil list unik type_kendaraan dari tabel part_stock
+router.get("/types", auth, role(["part"]), partController.getDistinctVehicleTypes);
 
 module.exports = router;

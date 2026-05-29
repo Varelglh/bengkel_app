@@ -141,6 +141,25 @@ exports.deletePart = async (req, res) => {
   }
 };
 
+exports.getDistinctVehicleTypes = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT DISTINCT type_kendaraan FROM part_stock WHERE type_kendaraan IS NOT NULL AND type_kendaraan != ''"
+    );
+    const types = rows.map(r => r.type_kendaraan);
+    res.json({
+      success: true,
+      data: types
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Gagal mengambil tipe kendaraan"
+    });
+  }
+};
+
 exports.getPartByNo = async (req, res) => {
   try {
     const { part_no } = req.params;
