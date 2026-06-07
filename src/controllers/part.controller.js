@@ -253,23 +253,4 @@ exports.validatePart = async (req, res) => {
   }
 };
 
-    res.json({
-      success: true,
-      part: {
-        id: part.id,
-        part_no: part.part_no,
-        part_name: part.part_name,
-        harga: part.harga,
-        stock: part.stock,
-        tersedia: part.stock > 0,
-        icon: part.icon
-      }
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 
