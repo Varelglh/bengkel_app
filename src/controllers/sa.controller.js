@@ -18,7 +18,9 @@ exports.getSaInspections = async (req, res) => {
         sa.name AS sa_name
       FROM inspections i
       JOIN users sa ON sa.id = i.sa_id
-      WHERE i.sa_id = ?
+      INNER JOIN inspection_parts ip ON ip.inspection_id = i.id
+      WHERE i.sa_id = ? AND ip.validation_status = 'APPROVED'
+      GROUP BY i.id
       ORDER BY i.created_at DESC
     `, [sa_id]);
 
@@ -89,7 +91,7 @@ exports.getSaInspectionDetail = async (req, res) => {
       FROM inspection_parts ip
       JOIN part_stock p ON p.id = ip.part_id
       LEFT JOIN karu_actions ka ON ka.inspection_part_id = ip.id
-      WHERE ip.inspection_id=?`,
+      WHERE ip.inspection_id=? AND ip.validation_status = 'APPROVED'`,
       [id]
     );
 
