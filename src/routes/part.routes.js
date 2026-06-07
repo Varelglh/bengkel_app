@@ -18,4 +18,8 @@ router.get("/by-no/:part_no", auth, role(["mekanik","part","sa","karu"]), partCo
 // Tambahan: Ambil list unik type_kendaraan dari tabel part_stock
 router.get("/types", auth, role(["part"]), partController.getDistinctVehicleTypes);
 
+// Menu Baru: Validasi Part
+router.get("/inspections", auth, role(["part"]), partController.getPartInspections);
+router.post("/validate", auth, role(["part"]), partController.validatePart);
+
 module.exports = router;

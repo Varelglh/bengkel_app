@@ -191,6 +191,18 @@ exports.saveKaruAction = async (req, res) => {
         "UPDATE inspections SET status='DONE' WHERE id=?",
         [inspection_id]
       );
+
+      // 🔥 Socket Notification to SA
+      const [inspRows] = await db.query("SELECT nopol FROM inspections WHERE id = ?", [inspection_id]);
+      if (inspRows.length > 0) {
+        const io = req.app.get("io");
+        if (io) {
+          io.to("sa").emit("inspection_done", {
+            message: `Inspection kendaraan ${inspRows[0].nopol} telah selesai diperbaiki`,
+            nopol: inspRows[0].nopol
+          });
+        }
+      }
     }
 
     res.json({

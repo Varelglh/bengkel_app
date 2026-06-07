@@ -180,6 +180,81 @@ exports.getPartByNo = async (req, res) => {
 
     res.json({
       success: true,
+      data: part
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
+
+exports.getPartInspections = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        i.*, 
+        u.name as mekanik_name
+      FROM inspections i
+      JOIN users u ON i.mekanik_id = u.id
+      WHERE i.status = 'OPEN'
+      ORDER BY i.created_at DESC
+    `);
+
+    for(let row of rows) {
+      const [parts] = await db.query(`
+        SELECT ip.*, ps.part_no, ps.part_name
+        FROM inspection_parts ip
+        JOIN part_stock ps ON ip.part_id = ps.id
+        WHERE ip.inspection_id = ?
+      `, [row.id]);
+      row.parts = parts;
+    }
+
+    res.json({
+      success: true,
+      data: rows
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.validatePart = async (req, res) => {
+  try {
+    const { inspection_id, part_id, status } = req.body; // status: 'APPROVED' or 'REJECTED'
+    
+    // Update status di inspection_parts
+    await db.query(
+      "UPDATE inspection_parts SET validation_status = ? WHERE inspection_id = ? AND part_id = ?",
+      [status, inspection_id, part_id]
+    );
+
+    // 🔥 Socket Notification to SA
+    const [inspRows] = await db.query("SELECT nopol, sa_id FROM inspections WHERE id = ?", [inspection_id]);
+    if (inspRows.length > 0) {
+      const io = req.app.get("io");
+      if (io) {
+        io.to("sa").emit("part_validated", {
+          message: `Update pengajuan part untuk ${inspRows[0].nopol}: ${status}`,
+          nopol: inspRows[0].nopol,
+          status: status
+        });
+      }
+    }
+
+    res.json({ success: true, message: `Part berhasil di-${status.toLowerCase()}` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+    res.json({
+      success: true,
       part: {
         id: part.id,
         part_no: part.part_no,

@@ -173,6 +173,15 @@ exports.createInspection = async (req, res) => {
       [total, inspection_id]
     );
 
+    // 🔥 Socket Notification to Part
+    const io = req.app.get("io");
+    if (io) {
+      io.to("part").emit("new_inspection", {
+        message: "Ada pengajuan part baru dari Mekanik",
+        nopol: nopol
+      });
+    }
+
     return res.status(201).json({
       success: true,
       message: "Inspection berhasil dibuat",
