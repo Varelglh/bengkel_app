@@ -233,16 +233,21 @@ exports.validatePart = async (req, res) => {
       [status, inspection_id, part_id]
     );
 
-    // 🔥 Socket Notification to SA
-    const [inspRows] = await db.query("SELECT nopol, sa_id FROM inspections WHERE id = ?", [inspection_id]);
+    // 🔥 Socket Notification
+    const [inspRows] = await db.query("SELECT nopol, sa_id, mekanik_id, karu_id FROM inspections WHERE id = ?", [inspection_id]);
     if (inspRows.length > 0) {
       const io = req.app.get("io");
       if (io) {
-        io.to("sa").emit("part_validated", {
+        const payload = {
           message: `Update pengajuan part untuk ${inspRows[0].nopol}: ${status}`,
           nopol: inspRows[0].nopol,
           status: status
-        });
+        };
+
+        // Kirim ke semua yang berkepentingan
+        io.to("sa").emit("part_validated", payload);
+        io.to("karu").emit("part_validated", payload);
+        io.to("mekanik").emit("part_validated", payload);
       }
     }
 
