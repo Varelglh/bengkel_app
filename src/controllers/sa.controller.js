@@ -87,11 +87,12 @@ exports.getSaInspectionDetail = async (req, res) => {
         ip.harga,
         COALESCE(ka.tindakan, 'belum_diperiksa') AS tindakan,
         COALESCE(ka.status, 'belum_diperiksa') AS status_perbaikan,
-        (ip.qty * ip.harga) AS subtotal
+        (ip.qty * ip.harga) AS subtotal,
+        ip.validation_status
       FROM inspection_parts ip
       JOIN part_stock p ON p.id = ip.part_id
       LEFT JOIN karu_actions ka ON ka.inspection_part_id = ip.id
-      WHERE ip.inspection_id=? AND ip.validation_status = 'APPROVED'`,
+      WHERE ip.inspection_id=?`,
       [id]
     );
 

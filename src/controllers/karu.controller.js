@@ -92,11 +92,12 @@ exports.getKaruInspectionDetail = async (req, res) => {
         ip.photo,
         ka.tanggal_perbaikan,
         ka.tindakan,
-        ka.status
+        ka.status,
+        ip.validation_status
       FROM inspection_parts ip
       JOIN part_stock p ON p.id = ip.part_id
       LEFT JOIN karu_actions ka ON ka.inspection_part_id = ip.id
-      WHERE ip.inspection_id=? AND ip.validation_status = 'APPROVED'`,
+      WHERE ip.inspection_id=?`,
       [id]
     );
 
