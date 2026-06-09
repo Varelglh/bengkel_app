@@ -82,6 +82,15 @@ exports.getKaruInspectionDetail = async (req, res) => {
       });
     }
 
+    // Calculate total dynamically based on APPROVED parts
+    const [[totalRow]] = await db.query(`
+      SELECT SUM(qty * harga) AS approved_total
+      FROM inspection_parts
+      WHERE inspection_id = ? AND validation_status = 'APPROVED'
+    `, [id]);
+    
+    inspection.total = totalRow.approved_total || 0;
+
     // ================= AMBIL PART =================
     const [parts] = await db.query(`
       SELECT 

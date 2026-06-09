@@ -78,6 +78,15 @@ exports.getSaInspectionDetail = async (req, res) => {
       });
     }
 
+    // Calculate total dynamically based on APPROVED parts
+    const [[totalRow]] = await db.query(`
+      SELECT SUM(qty * harga) AS approved_total
+      FROM inspection_parts
+      WHERE inspection_id = ? AND validation_status = 'APPROVED'
+    `, [id]);
+    
+    inspection.total = totalRow.approved_total || 0;
+
     // ================= PART + STATUS KARU =================
     const [parts] = await db.query(`
       SELECT 
@@ -156,7 +165,7 @@ exports.downloadInspectionPdf = async (req, res) => {
         (ip.qty * ip.harga) AS subtotal
       FROM inspection_parts ip
       JOIN part_stock p ON p.id = ip.part_id
-      WHERE ip.inspection_id=?`,
+      WHERE ip.inspection_id=? AND ip.validation_status = 'APPROVED'`,
       [id]
     );
 
